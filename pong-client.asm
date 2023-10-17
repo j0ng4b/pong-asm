@@ -47,11 +47,12 @@ main:
 	#     byte dx -> direção x da bola
 	#     byte dy -> direção y da bola
 	#     byte r  -> raio da bola
-	# Total: 7 bytes
+	#     byte s  -> velocidade da bola
+	# Total: 8 bytes
 	
 	# Alocação:
 	#     2 raquetes + 1 bola + variável byte
-	addiu $sp, $sp, -24
+	addiu $sp, $sp, -28
 	
 	# Inicializa os dados das raquetes
 	li $t1, 0x000f0064
@@ -67,21 +68,23 @@ main:
 	# Inicializa os dados da bola
 	li $t0, 0x012c00f0
 	sw $t0, -20($fp)
-	li $t1, 0x0000000
-	sh $t1, -22($fp)
-	li $t1, 0x0a
-	sb $t1, -23($fp)
+	li $t0, 0x0000000
+	sh $t0, -22($fp)
+	li $t0, 0x0a
+	sb $t0, -23($fp)
+	li $t0, 5
+	sb $t0, -24($fp)
 	
 	# Indica se o jogo iniciou
 	#     0 não iniciou
 	#     1 acabou de iniciar
 	#     2 está rodando
 	li $t0, 0x0
-	sb $t0, -24($fp)
+	sb $t0, -25($fp)
 	
 .gameloop:
 	# Verifica se o jogo foi iniciado
-	lb $t0, -24($fp)
+	lb $t0, -25($fp)
 	beq $t0, 0, .init
 	
 	# Inica o estado do jogo caso não iniciado
@@ -89,7 +92,7 @@ main:
 	
 	# Finaliza a inicialização do jogo
 	li $t0, 2
-	sb $t0, -24($fp)
+	sb $t0, -25($fp)
 	
 .update:
 	# Atualiza a posição da raquete do jogador
@@ -125,7 +128,7 @@ main:
 	
 	# Caso apertou põe o jogo no próximo estado: inicializaçõa
 	li $t0, 1
-	sb $t0, -24($fp)
+	sb $t0, -25($fp)
 	
 .draw:
 	protocol_emit (PROTOCOL_SET_COLOR, 255, 255, 255)
@@ -168,7 +171,7 @@ draw_racket:
 	
 	protocol_emit (PROTOCOL_DRAW_RECT, $t0, $t1, $t2, $t3)
 	jr $ra
-
+	
 draw_ball:
 	and $t0, $a0, 0xFFFF
 	srl $t1, $a0, 16
