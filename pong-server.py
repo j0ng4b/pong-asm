@@ -94,8 +94,8 @@ def main():
             proc.stdin.write(b'\n')
             proc.stdin.flush()
         else:
-            print(cmd, args)
             print('unknow command')
+            print(cmd, args)
             running = False
 
         pygame.display.flip()

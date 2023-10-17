@@ -1,14 +1,4 @@
 ##
-## Cabeçalho e rodapé
-##
-
-# Usados para indicar que o programa está inicializado
-.eqv PROTOCOL_READY "ready$"
-
-# Indica que o programa deve encerrar a comunição
-.eqv PROTOCOL_DONE "done$"
-
-##
 ## Comandos
 ##
 
@@ -42,8 +32,15 @@
 ##
 ## Input
 ##
+
+# Emite uma requisição de keyboard para obter uma tecla como um carácter
+# retorno:
+#   key -> número do carácter digitado, ver ascii
 .eqv PROTOCOL_KEY "key$"
 
+# Emite uma requisição para obter a posição x e y do mouse
+# retorno:
+#   coord -> posição x ou y do mouse como um inteiro
 .eqv PROTOCOL_MOUSE_X "mousex$"
 .eqv PROTOCOL_MOUSE_Y "mousey$"
 
@@ -135,6 +132,7 @@ protocol_cmd_lb: .asciiz %cmd
 	syscall
 .end_macro
 
+# Usado para obter um inteiro a partir do protocolo
 .macro protocol_geti (%cmd, %arg1)
 	.text
 	protocol_emit (%cmd)
@@ -145,6 +143,7 @@ protocol_cmd_lb: .asciiz %cmd
 	move %arg1, $v0
 .end_macro
 
+# Usado para obter um carácter a partir do protocolo
 .macro protocol_getc (%cmd, %arg1)
 	.text
 	protocol_emit (%cmd)
