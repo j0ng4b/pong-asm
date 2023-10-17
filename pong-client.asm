@@ -44,15 +44,14 @@ main:
 	# struct bola
 	#     short x -> coordenada x
 	#     short y -> coordenada y
-	#     byte dx -> direção x da bola
-	#     byte dy -> direção y da bola
+	#     byte d -> direção da bola
 	#     byte r  -> raio da bola
 	#     byte s  -> velocidade da bola
-	# Total: 8 bytes
+	# Total: 7 bytes
 	
 	# Alocação:
 	#     2 raquetes + 1 bola + variável byte
-	addiu $sp, $sp, -28
+	addiu $sp, $sp, -24
 	
 	# Inicializa os dados das raquetes
 	li $t1, 0x000f0064
@@ -68,33 +67,39 @@ main:
 	# Inicializa os dados da bola
 	li $t0, 0x012c00f0
 	sw $t0, -20($fp)
-	li $t0, 0x0000000
-	sh $t0, -22($fp)
+	li $t0, 1
+	sb $t0, -21($fp)
 	li $t0, 0x0a
-	sb $t0, -23($fp)
+	sb $t0, -22($fp)
 	li $t0, 5
-	sb $t0, -24($fp)
+	sb $t0, -23($fp)
 	
 	# Indica se o jogo iniciou
 	#     0 não iniciou
 	#     1 acabou de iniciar
 	#     2 está rodando
 	li $t0, 0x0
-	sb $t0, -25($fp)
+	sb $t0, -24($fp)
 	
 .gameloop:
 	# Verifica se o jogo foi iniciado
-	lb $t0, -25($fp)
+	lb $t0, -24($fp)
 	beq $t0, 0, .init
 	
-	# Inica o estado do jogo caso não iniciado
+	# Inicia o estado do jogo caso não iniciado
 	bne $t0, 1, .update
 	
 	# Finaliza a inicialização do jogo
 	li $t0, 2
-	sb $t0, -25($fp)
+	sb $t0, -24($fp)
 	
 .update:
+	# Atualiza a posição da bola, passa um ponteiro para a função move_ball,
+	# ponteiros sõa endereços de memória é o que está sendo passa para a
+	# função.
+	addi $a0, $fp, -23
+	jal move_ball
+	
 	# Atualiza a posição da raquete do jogador
 	protocol_geti (PROTOCOL_MOUSE_Y, $t0)
 	
@@ -128,7 +133,7 @@ main:
 	
 	# Caso apertou põe o jogo no próximo estado: inicializaçõa
 	li $t0, 1
-	sb $t0, -25($fp)
+	sb $t0, -24($fp)
 	
 .draw:
 	protocol_emit (PROTOCOL_SET_COLOR, 255, 255, 255)
@@ -170,6 +175,47 @@ draw_racket:
 	srl $t3, $a1, 16
 	
 	protocol_emit (PROTOCOL_DRAW_RECT, $t0, $t1, $t2, $t3)
+	jr $ra
+	
+move_ball:
+	lb $t0, 2($a0)             # direção
+	
+	# Direções:
+	#   0 não muda
+	#   1 superior esquerda
+	#   2 superior direita
+	#   3 inferior direita
+	#   4 inferior esquerda
+	bne $t0, 0, .ball_dir_1
+	jr $ra
+.ball_dir_1:
+	# Apenas lê a posição e velocidade se for movimentar a bola, ou seja, quando
+	# a direção é não é zero.
+	lb $t1, 0($a0)             # velocidade
+	lh $t2, 5($a0)             # posição x
+	lh $t3, 3($a0)             # posição y
+	
+	bne $t0, 1, .ball_dir_2
+	# Implementar o movimento
+	j .ball_update_pos
+	
+.ball_dir_2:
+	bne $t0, 2, .ball_dir_3
+	# Implementar o movimento
+	j .ball_update_pos
+
+.ball_dir_3:
+	bne $t0, 2, .ball_dir_4
+	# Implementar o movimento
+	j .ball_update_pos
+
+.ball_dir_4:
+	# Implementar o movimento
+	
+.ball_update_pos:
+	sh $t2, 5($a0)             # guarda a posição x
+	sh $t3, 3($a0)             # guarda posição y
+	
 	jr $ra
 	
 draw_ball:
