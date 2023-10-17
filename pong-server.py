@@ -94,7 +94,7 @@ def main():
             proc.stdin.write(b'\n')
             proc.stdin.flush()
         else:
-            print('unknow command')
+            print('Comando não reconhecido:')
             print(cmd, args)
             running = False
 
