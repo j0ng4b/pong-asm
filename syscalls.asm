@@ -6,6 +6,8 @@
 .eqv SYSCALL_READ_INT 5
 .eqv SYSCALL_READ_CHAR 12
 
+.eqv SYSCALL_RND_RANGE 42
+
 .eqv SYSCALL_EXIT 17
 
 # vim: ft=asm
