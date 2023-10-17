@@ -38,6 +38,16 @@
 #   ex, ey -> posição final da linha
 .eqv PROTOCOL_DRAW_LINE "line$"
 
+
+##
+## Input
+##
+.eqv PROTOCOL_KEY "key$"
+
+.eqv PROTOCOL_MOUSE_X "mousex$"
+.eqv PROTOCOL_MOUSE_Y "mousey$"
+
+
 # Não deve ser usada diretamente, apenas pela macro protocol_emit
 # pois é usada para emitir um comando.
 .macro __emit_cmd (%cmd)
@@ -123,6 +133,26 @@ protocol_cmd_lb: .asciiz %cmd
 	li $v0, SYSCALL_PRINT_CHAR
 	li $a0, 0x24
 	syscall
+.end_macro
+
+.macro protocol_geti (%cmd, %arg1)
+	.text
+	protocol_emit (%cmd)
+	
+	li $v0, SYSCALL_READ_INT
+	syscall
+	
+	move %arg1, $v0
+.end_macro
+
+.macro protocol_getc (%cmd, %arg1)
+	.text
+	protocol_emit (%cmd)
+	
+	li $v0, SYSCALL_READ_CHAR
+	syscall
+	
+	move %arg1, $v0
 .end_macro
 
 # vim: ft=asm

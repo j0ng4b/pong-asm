@@ -42,8 +42,10 @@ def main():
 
     running = True
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    clock = pygame.time.Clock()
     color = pygame.Color(0, 0, 0)
+
+    last_key = -1
+    key_pending = False
 
     proc = subprocess.Popen(['java', '-jar', 'Mars.jar', 'pong-client.asm'],
                             stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -55,8 +57,12 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN:
+                last_key = (str(event.key) + '\n').encode()
 
-        cmd, args = read_protocol(proc)
+        if not key_pending:
+            cmd, args = read_protocol(proc)
+
         if cmd == 'done':
             running = False
         elif cmd == 'clear':
@@ -67,9 +73,32 @@ def main():
             rect = pygame.Rect((int(args[0]), int(args[1])),
                                (int(args[2]), int(args[3])))
             pygame.draw.rect(screen, color, rect)
+        elif cmd == 'circle':
+            pygame.draw.circle(screen, color, (int(args[0]), int(args[1])),
+                               int(args[2]))
+        elif cmd == 'key':
+            if last_key == -1:
+                key_pending = True
+            else:
+                proc.stdin.write(last_key)
+                proc.stdin.flush()
+
+                last_key = -1
+                key_pending = False
+        elif cmd == 'mousex':
+            proc.stdin.write(str(pygame.mouse.get_pos()[0]).encode())
+            proc.stdin.write(b'\n')
+            proc.stdin.flush()
+        elif cmd == 'mousey':
+            proc.stdin.write(str(pygame.mouse.get_pos()[1]).encode())
+            proc.stdin.write(b'\n')
+            proc.stdin.flush()
+        else:
+            print(cmd, args)
+            print('unknow command')
+            running = False
 
         pygame.display.flip()
-        clock.tick(60)
 
     proc.kill()
     pygame.quit()
