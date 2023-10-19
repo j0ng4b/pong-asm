@@ -63,9 +63,7 @@ def main():
         if not key_pending:
             cmd, args = read_protocol(proc)
 
-        if cmd == 'done':
-            running = False
-        elif cmd == 'clear':
+        if cmd == 'clear':
             screen.fill(color)
         elif cmd == 'setcolor':
             color.update([int(x) for x in args])
