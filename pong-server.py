@@ -63,19 +63,19 @@ def main():
         if not key_pending:
             cmd, args = read_protocol(proc)
 
-        if cmd == 'clear':
+        if cmd == 'clear' and len(args) == 0:
             pygame.display.flip()
             screen.fill(color)
-        elif cmd == 'setcolor':
+        elif cmd == 'setcolor' and (len(args) == 4 or len(args) == 3):
             color.update([int(x) for x in args])
-        elif cmd == 'rect':
+        elif cmd == 'rect' and len(args) == 4:
             rect = pygame.Rect((int(args[0]), int(args[1])),
                                (int(args[2]), int(args[3])))
             pygame.draw.rect(screen, color, rect)
-        elif cmd == 'circle':
+        elif cmd == 'circle' and len(args) == 3:
             pygame.draw.circle(screen, color, (int(args[0]), int(args[1])),
                                int(args[2]))
-        elif cmd == 'key':
+        elif cmd == 'key' and len(args) == 0:
             if last_key == -1:
                 key_pending = True
             else:
@@ -84,18 +84,16 @@ def main():
 
                 last_key = -1
                 key_pending = False
-        elif cmd == 'mousex':
+        elif cmd == 'mousex' and len(args) == 0:
             proc.stdin.write(str(pygame.mouse.get_pos()[0]).encode())
             proc.stdin.write(b'\n')
             proc.stdin.flush()
-        elif cmd == 'mousey':
+        elif cmd == 'mousey' and len(args) == 0:
             proc.stdin.write(str(pygame.mouse.get_pos()[1]).encode())
             proc.stdin.write(b'\n')
             proc.stdin.flush()
         else:
-            print('Comando não reconhecido:')
-            print(cmd, args)
-            running = False
+            raise SyntaxError(f'O comando `{cmd}` não foi reconhecido para os argumentos {args}')
 
     proc.kill()
     pygame.quit()
