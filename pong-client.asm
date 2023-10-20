@@ -47,11 +47,40 @@ main:
 	#     byte d -> direção da bola
 	#     byte r  -> raio da bola
 	#     byte s  -> velocidade da bola
-	# Total: 7 bytes
+	#     preenchimento 1 byte
+	# Total: 8 bytes
+	
+	# Observações sobre alocação: não é só simplesmente por um valor aleatório,
+	# por diversos pontos: a pilha não é infinita, o processador trabalha com
+	# palavras de 4 bytes, logo você não pode só alocar uma quantidade sem pensar
+	# em alinhamento de memória, por exemplo:
+	#
+	#     addiu $sp, $sp, -3
+	#     sh $t0, 0($sp)
+	#
+	# O sh falha pois não é possível guardar $t0 em um lugar que não é alinhado
+	# para meia palavra (2 bytes) no caso visualmente é isso que acontece:
+	#               sp
+	#               v
+	#   | 0 1 2 3 | 4 5 6 7 | <- endereços
+	#
+	# Com sp - 3 fica:
+	#       sp
+	#       v
+	#   | 0 1 2 3 | 4 5 6 7 | <- endereços
+	#
+	# Como pode perceber o endereço 1 não está alinhado, está no final de uma
+	# meia palavra, dado essa explicaçõa aconcelho que quando for alocar algo,
+	# sempre prefira multiplos de 4.
+	#
+	# No exemplo acima, era resolvido alocado 4 bytes e não 3, o quarto byte é
+	# chamado de padding (preenchimento) é usado apenas para manter a memória
+	# alinhada, é uma prática comum ter preenchimente quando necessário.
 	
 	# Alocação:
-	#     2 raquetes + 1 bola + variável byte
-	addiu $sp, $sp, -24
+	#     2 raquetes + 1 bola + variável byte + preenchimento 3 bytes
+	#
+	addiu $sp, $sp, -28
 	
 	# Inicializa os dados das raquetes
 	li $t1, 0x000f0064
