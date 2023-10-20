@@ -64,6 +64,7 @@ def main():
             cmd, args = read_protocol(proc)
 
         if cmd == 'clear':
+            pygame.display.flip()
             screen.fill(color)
         elif cmd == 'setcolor':
             color.update([int(x) for x in args])
@@ -95,8 +96,6 @@ def main():
             print('Comando não reconhecido:')
             print(cmd, args)
             running = False
-
-        pygame.display.flip()
 
     proc.kill()
     pygame.quit()
