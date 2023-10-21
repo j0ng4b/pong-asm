@@ -2,6 +2,9 @@
 .include "macros.asm"
 .include "protocol.asm"
 
+.eqv SCREEN_WIDTH 600
+.eqv SCREEN_HEIGHT 480
+
 .data
 
 .text
@@ -82,37 +85,44 @@ main:
 	#
 	addiu $sp, $sp, -28
 	
+	# Variáveis:
+	#    s0 -> primeira raquete
+	#    s1 -> segunda raquete
+	#    s2 -> bola
+	#    s3 -> inicialização de jogo
+	addi $s0, $fp, -8
+	addi $s1, $fp, -16
+	addi $s2, $fp, -24
+	addi $s3, $fp, -28
+	
 	# Inicializa os dados das raquetes
-	li $t1, 0x000f0064
+	li $t0, 0x0064000f         # Largura e altura da raquete: 15x100
 	
-	li $t0, 0x000a0000
-	sw $t0, -4($fp)
-	sw $t1, -8($fp)
+	li $t1, 0x00be000a         # Coordenadas (x,y) da raquete: 15,190
+	sw $t1, 0($s0)
+	sw $t0, 4($s0)
 	
-	li $t0, 0x023f0000
-	sw $t0, -12($fp)
-	sw $t1, -16($fp)
+	li $t1, 0x00be023f         # Coordenadas (x,y) da raquete: 575,190
+	sw $t1, 0($s1)
+	sw $t0, 4($s1)
 	
 	# Inicializa os dados da bola
-	li $t0, 0x012c00f0
-	sw $t0, -20($fp)
-	li $t0, 1
-	sb $t0, -21($fp)
-	li $t0, 0x0a
-	sb $t0, -22($fp)
-	li $t0, 5
-	sb $t0, -23($fp)
+	li $t0, 0x00f0012c         # Coordenadas (x,y) da bola: 300,240
+	sw $t0, 0($s2)
+	
+	li $t0, 0x05000a           # Tamanho, direção e velocidade da bola
+	sw $t0, 4($s2)
 	
 	# Indica se o jogo iniciou
 	#     0 não iniciou
 	#     1 acabou de iniciar
 	#     2 está rodando
 	li $t0, 0x0
-	sb $t0, -24($fp)
+	sb $t0, 0($s3)
 	
 .gameloop:
 	# Verifica se o jogo foi iniciado
-	lb $t0, -24($fp)
+	lb $t0, 0($s3)
 	beq $t0, 0, .init
 	
 	# Inicia o estado do jogo caso não iniciado
@@ -120,13 +130,13 @@ main:
 	
 	# Finaliza a inicialização do jogo
 	li $t0, 2
-	sb $t0, -24($fp)
+	sb $t0, 0($s3)
 	
 .update:
 	# Atualiza a posição da bola, passa um ponteiro para a função move_ball,
 	# ponteiros sõa endereços de memória é o que está sendo passa para a
 	# função.
-	addi $a0, $fp, -23
+	move $a0, $s2
 	jal move_ball
 	
 	# Atualiza a posição da raquete do jogador
@@ -147,7 +157,7 @@ main:
 	li $t0, 380                           # largura da tela - largura da raquete
 .dentro_tela:
 	# Atualiza a posição da raquete
-	sh $t0, -12($fp)
+	sh $t0, 2($s1)
 	
 	protocol_emit (PROTOCOL_SET_COLOR, 0, 0, 0)
 	protocol_emit (PROTOCOL_CLEAR_SCREEN)
@@ -162,25 +172,21 @@ main:
 	
 	# Caso apertou põe o jogo no próximo estado: inicializaçõa
 	li $t0, 1
-	sb $t0, -24($fp)
+	sb $t0, 0($s3)
 	
 .draw:
 	protocol_emit (PROTOCOL_SET_COLOR, 255, 255, 255)
-	lwl $a0, -3($fp)
-	lwr $a0, -2($fp)
-	lwl $a1, -7($fp)
-	lwr $a1, -6($fp)
+	
+	lw $a0, 0($s0)
+	lw $a1, 4($s0)
 	jal draw_racket
 	
-	lwl $a0, -11($fp)
-	lwr $a0, -10($fp)
-	lwl $a1, -15($fp)
-	lwr $a1, -14($fp)
+	lw $a0, 0($s1)
+	lw $a1, 4($s1)
 	jal draw_racket
 	
-	lwl $a0, -19($fp)
-	lwr $a0, -18($fp)
-	lb $a1, -23($fp)
+	lw $a0, 0($s2)
+	lb $a1, 4($s2)
 	jal draw_ball
 	
 	j .gameloop
@@ -207,7 +213,7 @@ draw_racket:
 	jr $ra
 	
 move_ball:
-	lb $t0, 2($a0)             # direção
+	lb $t0, 5($a0)             # direção
 	
 	# Direções:
 	#   0 não muda
@@ -220,9 +226,9 @@ move_ball:
 .ball_dir_1:
 	# Apenas lê a posição e velocidade se for movimentar a bola, ou seja, quando
 	# a direção é não é zero.
-	lb $t1, 0($a0)             # velocidade
-	lh $t2, 5($a0)             # posição x
-	lh $t3, 3($a0)             # posição y
+	lb $t1, 6($a0)             # velocidade
+	lh $t2, 0($a0)             # posição x
+	lh $t3, 2($a0)             # posição y
 	
 	bne $t0, 1, .ball_dir_2
 	# Implementar o movimento
@@ -242,14 +248,14 @@ move_ball:
 	# Implementar o movimento
 	
 .ball_update_pos:
-	sh $t2, 5($a0)             # guarda a posição x
-	sh $t3, 3($a0)             # guarda posição y
+	sh $t2, 0($a0)             # guarda a posição x
+	sh $t3, 2($a0)             # guarda posição y
 	
 	jr $ra
 	
 draw_ball:
-	and $t0, $a0, 0xFFFF
-	srl $t1, $a0, 16
+	and $t0, $a0, 0xFFFF      # extrai a posição x da bola 0x____XXXX
+	srl $t1, $a0, 16          # extrai a posição y da bola 0xYYYY____
 	
 	protocol_emit (PROTOCOL_DRAW_CIRCLE, $t0, $t1, $a1)
 	jr $ra
