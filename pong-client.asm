@@ -5,8 +5,6 @@
 .eqv SCREEN_WIDTH 600
 .eqv SCREEN_HEIGHT 480
 
-.data
-
 .text
 main:
 	# Aloca espaço na stack para guardar os registradores $fp e $ra
@@ -203,11 +201,11 @@ main:
 	exit (0)
 	
 draw_racket:
-    and $t0, $a0, 0xFFFF
-    srl $t1, $a0, 16
+    and $t0, $a0, 0xFFFF    # extrai a posição x da raquete 0x____XXXX
+    srl $t1, $a0, 16        # extrai a posição y da raquete 0xYYYY____
 	
-    and $t2, $a1, 0xFFFF
-	srl $t3, $a1, 16
+    and $t2, $a1, 0xFFFF    # extrai a largura 0x____LLLL
+    srl $t3, $a1, 16        # extrai a altura 0xAAAA____
 	
 	protocol_emit (PROTOCOL_DRAW_RECT, $t0, $t1, $t2, $t3)
 	jr $ra
