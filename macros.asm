@@ -7,20 +7,16 @@
 .end_macro
 
 # Gera um número entre 0 <= num < %end
-.macro randint (%end)
-	randint (0, %end)
-.end_macro
-
-# Mesmo que o de cima, mas para saber a real diferença consulte a documentação
-# da syscall 42
-.macro randint (%id, %end)
+.macro randint (%start, %end, %out)
 	li $v0, SYSCALL_RND_RANGE
-	li $a0, %id
+	li $a0, 0                # id, para saber o que é veja a syscall 42
 	
-	li $a1, %end
+	add $a1, $zero, %end     # move o valor de %end para $a1
+	addi $a1, $a1, 1         # adiciona 1 para poder gerar [%start, %end] e não [%start, %end[
+	sub $a1, $a1, %start
 	syscall
 	
-	move $v0, $a0
+	add %out, $a0, %start
 .end_macro
 
 # vim: ft=asm
