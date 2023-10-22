@@ -11,7 +11,7 @@ main:
 	addiu $sp, $sp, -8
 	sw $fp, 4($sp)    # guarda o registrador $fp
 	sw $ra, 0($sp)    # guarda o registrador $ra
-	move $fp, $sp     # utiliza a stack átraves do registrador $fp e não $sp
+	move $fp, $sp     # utiliza a stack através do registrador $fp e não $sp
 	
 	# Aloca espaço na stack para armazenar variáveis locais. Nesse caso usa o
 	# $sp para fazer a alocação mas a utilizar esse espaço é pelo $fp
@@ -26,14 +26,17 @@ main:
 	# };
 	#
 	# É uma struct com dois ints ou seja 8 bytes (4 bytes para cada int) então
-	# quando for alocado mémoria para essa struct será alocado 8 bytes, se for
+	# quando for alocado memória para essa struct será alocado 8 bytes, se for
 	# necessário duas structs dessa então serão 16 bytes e assim por diante.
 	#
 	# Para referência de alocação:
-	#   byte  1 byte
-	#   short 2 bytes
-	#   int   4 bytes
-	#   long  8 bytes
+	#   byte   1 byte
+	#   short  2 bytes
+	#   int    4 bytes
+	#   long   8 bytes
+	#
+	#   float  4 bytes
+	#   double 8 bytes
 	
 	# struct raquete
 	#     short x -> coordenada x
@@ -71,12 +74,12 @@ main:
 	#   | 0 1 2 3 | 4 5 6 7 | <- endereços
 	#
 	# Como pode perceber o endereço 1 não está alinhado, está no final de uma
-	# meia palavra, dado essa explicaçõa aconcelho que quando for alocar algo,
-	# sempre prefira multiplos de 4.
+	# meia palavra, dado essa explicação aconselho que quando for alocar algo,
+	# sempre prefira múltiplos de 4.
 	#
 	# No exemplo acima, era resolvido alocado 4 bytes e não 3, o quarto byte é
 	# chamado de padding (preenchimento) é usado apenas para manter a memória
-	# alinhada, é uma prática comum ter preenchimente quando necessário.
+	# alinhada, é uma prática comum ter preenchimento quando necessário.
 	
 	# Alocação:
 	#     2 raquetes + 1 bola + variável byte + preenchimento 3 bytes
@@ -168,7 +171,7 @@ main:
 	protocol_geti (PROTOCOL_KEY, $t0)
 	bne $t0, 13, .draw
 	
-	# Caso apertou põe o jogo no próximo estado: inicializaçõa
+	# Caso apertou põe o jogo no próximo estado: inicialização
 	li $t0, 1
 	sb $t0, 0($s3)
 	
