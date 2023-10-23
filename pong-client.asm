@@ -133,6 +133,9 @@ main:
 	# Inicia o estado do jogo caso não iniciado
 	bne $t0, 1, .update
 	
+	randint (1, 4, $t0)
+	sb $t0, 9($s2)
+	
 	# Finaliza a inicialização do jogo
 	li $t0, 2
 	sb $t0, 0($s3)
@@ -252,21 +255,25 @@ move_ball:
 	l.s $f1, 4($a0)             # posição y
 	
 	bne $t0, 1, .ball_dir_2
-	# Implementar o movimento
+	add.s $f0, $f0, $f2
+	sub.s $f1, $f1, $f2
 	j .ball_update_pos
 	
 .ball_dir_2:
 	bne $t0, 2, .ball_dir_3
-	# Implementar o movimento
+	add.s $f0, $f0, $f2
+	add.s $f1, $f1, $f2
 	j .ball_update_pos
 
 .ball_dir_3:
-	bne $t0, 2, .ball_dir_4
-	# Implementar o movimento
+	bne $t0, 3, .ball_dir_4
+	sub.s $f0, $f0, $f2
+	add.s $f1, $f1, $f2
 	j .ball_update_pos
-
+	
 .ball_dir_4:
-	# Implementar o movimento
+	sub.s $f0, $f0, $f2
+	sub.s $f1, $f1, $f2
 	
 .ball_update_pos:
 	s.s $f0, 0($a0)             # guarda a posição x
