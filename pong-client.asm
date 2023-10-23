@@ -46,13 +46,12 @@ main:
 	# Total: 8 bytes
 	
 	# struct bola
-	#     short x -> coordenada x
-	#     short y -> coordenada y
-	#     byte d -> direção da bola
+	#     float x -> coordenada x
+	#     float y -> coordenada y
 	#     byte r  -> raio da bola
-	#     byte s  -> velocidade da bola
-	#     preenchimento 1 byte
-	# Total: 8 bytes
+	#     byte d  -> direção da bola
+	#     short s -> velocidade da bola
+	# Total: 12 bytes
 	
 	# Observações sobre alocação: não é só simplesmente por um valor aleatório,
 	# por diversos pontos: a pilha não é infinita, o processador trabalha com
@@ -84,17 +83,19 @@ main:
 	# Alocação:
 	#     2 raquetes + 1 bola + variável byte + preenchimento 3 bytes
 	#
-	addiu $sp, $sp, -28
+	addiu $sp, $sp, -36
 	
 	# Variáveis:
 	#    s0 -> primeira raquete
 	#    s1 -> segunda raquete
 	#    s2 -> bola
 	#    s3 -> inicialização de jogo
+	#    s4 -> delta time
 	addi $s0, $fp, -8
 	addi $s1, $fp, -16
-	addi $s2, $fp, -24
-	addi $s3, $fp, -28
+	addi $s2, $fp, -28
+	addi $s3, $fp, -32
+	addi $s4, $fp, -36
 	
 	# Inicializa os dados das raquetes
 	li $t0, 0x0064000f         # Largura e altura da raquete: 15x100
@@ -108,11 +109,14 @@ main:
 	sw $t0, 4($s1)
 	
 	# Inicializa os dados da bola
-	li $t0, 0x00f0012c         # Coordenadas (x,y) da bola: 300,240
+	li $t0, 0x43960000         # Coordenadas x da bola: 300.0
 	sw $t0, 0($s2)
 	
-	li $t0, 0x05000a           # Tamanho, direção e velocidade da bola
+	li $t0, 0x43700000         # Coordenadas y da bola: 240.0
 	sw $t0, 4($s2)
+	
+	li $t0, 0x03e8000a           # Tamanho, direção e velocidade da bola
+	sw $t0, 8($s2)
 	
 	# Indica se o jogo iniciou
 	#     0 não iniciou
@@ -142,6 +146,7 @@ main:
 	# ponteiros são endereços de memória é o que está sendo passa para a
 	# função.
 	move $a0, $s2
+	l.s $f0, 0($s4)           # Delta time é usado para criar um movimento mais suave
 	jal move_ball
 	
 	# Atualiza a posição da raquete do jogador
@@ -190,8 +195,9 @@ main:
 	lw $a1, 4($s1)
 	jal draw_racket
 	
-	lw $a0, 0($s2)
-	lb $a1, 4($s2)
+	l.s $f0, 0($s2)
+	l.s $f1, 4($s2)
+	lb $a0, 8($s2)
 	jal draw_ball
 	
 	j .gameloop
@@ -218,7 +224,7 @@ draw_racket:
 	jr $ra
 	
 move_ball:
-	lb $t0, 5($a0)             # direção
+	lb $t0, 9($a0)             # direção
 	
 	# Direções:
 	#   0 não muda
@@ -231,9 +237,19 @@ move_ball:
 .ball_dir_1:
 	# Apenas lê a posição e velocidade se for movimentar a bola, ou seja, quando
 	# a direção é não é zero.
-	lb $t1, 6($a0)             # velocidade
-	lh $t2, 0($a0)             # posição x
-	lh $t3, 2($a0)             # posição y
+	lhu $t1, 10($a0)            # velocidade
+	mtc1 $t1, $f2               # move a velocidade para FPU (Float Process Unit)
+	cvt.s.w $f2, $f2            # O número movido precisa ser convertido para ser considerado um float
+	
+	# É aqui onde deixa o movimento suave, multiplica a velocidade pelo delta time,
+	# a explicação mais simples é que o movimento vai acontecer x pixels em 1 segundo
+	# para formar o segundo tem a soma de todos o delta times, então um delta time é
+	# uma fração do movimento, confuso, mas é isso.
+	mul.s $f2, $f2, $f0
+	
+	# A partir desse ponto delta time ($f0) deixa de exitir sendo agora a posição x da bola
+	l.s $f0, 0($a0)             # posição x
+	l.s $f1, 4($a0)             # posição y
 	
 	bne $t0, 1, .ball_dir_2
 	# Implementar o movimento
@@ -253,16 +269,25 @@ move_ball:
 	# Implementar o movimento
 	
 .ball_update_pos:
-	sh $t2, 0($a0)             # guarda a posição x
-	sh $t3, 2($a0)             # guarda posição y
+	s.s $f0, 0($a0)             # guarda a posição x
+	s.s $f1, 4($a0)             # guarda a posição y
 	
 	jr $ra
 	
 draw_ball:
-	and $t0, $a0, 0xFFFF      # extrai a posição x da bola 0x____XXXX
-	srl $t1, $a0, 16          # extrai a posição y da bola 0xYYYY____
+	# Converte de uma posição float para uma posição inteira
+	cvt.w.s $f0, $f0
+	cvt.w.s $f1, $f1
 	
-	protocol_emit (PROTOCOL_DRAW_CIRCLE, $t0, $t1, $a1)
+	# Move dos registradores float pra os registradores inteiros
+	mfc1 $t0, $f0
+	mfc1 $t1, $f1
+	
+	# Só para evitar dor de cabeça move o tamanho da bola para um
+	# registrador temporário
+	move $t2, $a0
+	
+	protocol_emit (PROTOCOL_DRAW_CIRCLE, $t0, $t1, $t2)
 	jr $ra
 
 # vim: ft=asm
