@@ -255,14 +255,14 @@ move_ball:
 	l.s $f1, 4($a0)             # posição y
 	
 	bne $t0, 1, .ball_dir_2
-	add.s $f0, $f0, $f2
+	sub.s $f0, $f0, $f2
 	sub.s $f1, $f1, $f2
 	j .ball_update_pos
 	
 .ball_dir_2:
 	bne $t0, 2, .ball_dir_3
 	add.s $f0, $f0, $f2
-	add.s $f1, $f1, $f2
+	sub.s $f1, $f1, $f2
 	j .ball_update_pos
 
 .ball_dir_3:
@@ -272,8 +272,9 @@ move_ball:
 	j .ball_update_pos
 	
 .ball_dir_4:
-	sub.s $f0, $f0, $f2
-	sub.s $f1, $f1, $f2
+	add.s $f0, $f0, $f2
+	add.s $f1, $f1, $f2
+	j .ball_update_pos
 	
 .ball_update_pos:
 	s.s $f0, 0($a0)             # guarda a posição x
