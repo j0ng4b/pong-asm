@@ -152,6 +152,19 @@ main:
 	l.s $f0, 0($s4)           # Delta time é usado para criar um movimento mais suave
 	jal move_ball
 	
+	l.s $f0, 4($s2)
+	cvt.w.s $f0, $f0
+	mfc1 $t1, $f0
+	addi $t1, $t1, -50
+	bgtz $t1, .dentro_cima1
+	li $t1, 0
+.dentro_cima1:
+	addi $t0, $t1, 100
+	blt $t0, 480, .dentro_tela1
+	li $t1, 380
+.dentro_tela1:
+	sh $t1, 2($s0)
+	
 	# Atualiza a posição da raquete do jogador
 	protocol_geti (PROTOCOL_MOUSE_Y, $t0)
 	
