@@ -277,6 +277,47 @@ move_ball:
 	j .ball_update_pos
 	
 .ball_update_pos:
+	# Verifica colisão com as bordas
+	cvt.w.s $f2, $f1
+	mfc1 $t1, $f2
+	
+	# Carrega a direção
+	lb $t0, 9($a0)
+	
+	# Carrega o tamanho da pola para ajudar na checagem da colisão
+	lb $t2, 8($a0)
+	sub $t1, $t1, $t2
+	
+	bgtz $t1, .ball_check_up
+	# A mudança da direção é feita através de uma "fórmula":
+	#     (d + 1) % 4 + 1
+	# Essa fórmula só funciona graças a como as direções foram
+	# pensadas, a direção oposta está sempre a dois de distância
+	# da direção atual, por exemplo, a direção oposta de 1 é 3 e
+	# a de 2 é 4, o mesmo vale para o contrário.
+	addi $t0, $t0, 1        # Adiciona 1
+	addi $t2, $zero, 4      # Usado para obter o resto da divisão
+	div $t0, $t2            # Calcula o resto da divisõa que é armazenado no registrador hi
+	mfhi $t0                # Obtém o resto da divisão
+	addi $t0, $t0, 1        # Última parte adiciona 1 novamente
+	j .ball_save_pos
+.ball_check_up:
+	mfc1 $t1, $f2
+	
+	# Carrega o tamanho da pola para ajudar na checagem da colisão
+	lb $t2, 8($a0)
+	add $t1, $t1, $t2
+	
+	blt $t1, 480, .ball_save_pos
+	addi $t0, $t0, 1
+	addi $t2, $zero, 4
+	div $t0, $t2
+	mfhi $t0
+	addi $t0, $t0, 1
+	j .ball_save_pos
+	
+.ball_save_pos:
+	sb $t0, 9($a0)
 	s.s $f0, 0($a0)             # guarda a posição x
 	s.s $f1, 4($a0)             # guarda a posição y
 	
