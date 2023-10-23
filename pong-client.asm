@@ -172,6 +172,14 @@ main:
 	# Atualiza a posição da raquete
 	sh $t0, 2($s1)
 	
+	move $a0, $s2      # bola
+	move $a1, $s1      # raquete do jogador
+	jal ball_racket_collision
+	
+	move $a0, $s2      # bola
+	move $a1, $s0      # raquete da máquina
+	jal ball_racket_collision
+	
 	# Pula a verificação de tecla
 	j .draw
 	
@@ -321,6 +329,71 @@ move_ball:
 	s.s $f0, 0($a0)             # guarda a posição x
 	s.s $f1, 4($a0)             # guarda a posição y
 	
+	jr $ra
+	
+ball_racket_collision:
+	# Carrega a posição da bola
+	l.s $f0, 0($a0)
+	l.s $f1, 4($a0)
+	
+	# Converte de uma posição float para uma posição inteira
+	cvt.w.s $f0, $f0
+	cvt.w.s $f1, $f1
+	
+	# Move dos registradores float pra os registradores inteiros
+	mfc1 $t0, $f0
+	mfc1 $t1, $f1
+	
+	# Carrega o tamanho da bola
+	lb $t2, 8($a0)
+	add $t0, $t0, $t2
+	sub $t1, $t1, $t2
+	
+	# Carrega os dados da raquete
+	lh $t3, 0($a1)
+	lh $t4, 2($a1)
+	lh $t5, 4($a1)
+	lh $t7, 6($a1)
+	
+	# Verifica se a posição x da bola é menor que a x da raquete se
+	# for o caso então não há colisão
+	blt $t0, $t3, .check_end
+	# O mesmo vale para a posição y
+	blt $t1, $t4, .check_end
+	
+	# Ainda posição y so que agora a bola mais baixa do que a raquete
+	mfc1 $t1, $f1
+	add $t1, $t1, $t2
+	add $t4, $t4, $t7
+	bgt $t1, $t4, .check_end
+	
+	# Verifa se a bola passou da raquete na horizontal, nesse caso
+	# também não há colisão
+	mfc1 $t0, $f0
+	sub $t0, $t0, $t2
+	add $t3, $t3, $t6
+	bgt $t0, $t3, .check_end
+	
+	# Se chegar nesse ponto há colisõa então a direção horizonta da
+	# bola deve ser invertida
+	
+	# Carrega a direção
+	lb $t0, 9($a0)
+	
+	beq $t0, 1, .check_add_dir
+	bne $t0, 3, .check_sub_dir
+	# Se chegar aqui quer dizer que a direção é igual a 1 ou 3
+.check_add_dir:
+	addi $t0, $t0, 1
+	sb $t0, 9($a0)
+	j .check_end
+	
+.check_sub_dir:
+	sub $t0, $t0, 1
+	sb $t0, 9($a0)
+	j .check_end
+	
+.check_end:
 	jr $ra
 	
 draw_ball:
