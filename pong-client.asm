@@ -134,8 +134,12 @@ main:
 	sb $t0, 0($s3)
 	
 .update:
+	# Obtém o delta time através do protocolo
+	protocol_getf(PROTOCOL_DELTA_TIME, $f0)
+	s.s $f0, 0($s4)
+	
 	# Atualiza a posição da bola, passa um ponteiro para a função move_ball,
-	# ponteiros sõa endereços de memória é o que está sendo passa para a
+	# ponteiros são endereços de memória é o que está sendo passa para a
 	# função.
 	move $a0, $s2
 	jal move_ball

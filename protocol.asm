@@ -44,6 +44,12 @@
 .eqv PROTOCOL_MOUSE_X "mousex$"
 .eqv PROTOCOL_MOUSE_Y "mousey$"
 
+# Emite uma requisição para obter o tempo entre o início e
+# o fim de um frame, útil para movimento.
+# retorno:
+#   delta_time -> tempo entre o início e fim do frame
+.eqv PROTOCOL_DELTA_TIME "deltatime$"
+
 
 # Não deve ser usada diretamente, apenas pela macro protocol_emit
 # pois é usada para emitir um comando.
@@ -141,6 +147,17 @@ protocol_cmd_lb: .asciiz %cmd
 	syscall
 	
 	move %arg1, $v0
+.end_macro
+
+# Usado para obter um float a partir do protocolo
+.macro protocol_getf (%cmd, %arg1)
+	.text
+	protocol_emit (%cmd)
+	
+	li $v0, SYSCALL_READ_FLOAT
+	syscall
+	
+	mov.s %arg1, $f0
 .end_macro
 
 # Usado para obter um carácter a partir do protocolo

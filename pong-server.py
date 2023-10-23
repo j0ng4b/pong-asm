@@ -44,6 +44,9 @@ def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     color = pygame.Color(0, 0, 0)
 
+    delta_time = 0
+    last_time = pygame.time.get_ticks()
+
     last_key = -1
     key_pending = False
 
@@ -54,6 +57,9 @@ def main():
     proc.stdout.read1(68)
 
     while proc.poll() == None and running:
+        delta_time = (pygame.time.get_ticks() - last_time) / 1000
+        last_time = pygame.time.get_ticks()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -92,8 +98,14 @@ def main():
             proc.stdin.write(str(pygame.mouse.get_pos()[1]).encode())
             proc.stdin.write(b'\n')
             proc.stdin.flush()
+        elif cmd == 'deltatime' and len(args) == 0:
+            proc.stdin.write(str(delta_time).encode())
+            proc.stdin.write(b'\n')
+            proc.stdin.flush()
         else:
             raise SyntaxError(f'O comando `{cmd}` não foi reconhecido para os argumentos {args}')
+
+        pygame.time.delay(1)
 
     proc.kill()
     pygame.quit()
