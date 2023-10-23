@@ -169,9 +169,6 @@ main:
 	# Atualiza a posição da raquete
 	sh $t0, 2($s1)
 	
-	protocol_emit (PROTOCOL_SET_COLOR, 0, 0, 0)
-	protocol_emit (PROTOCOL_CLEAR_SCREEN)
-	
 	# Pula a verificação de tecla
 	j .draw
 	
@@ -185,6 +182,9 @@ main:
 	sb $t0, 0($s3)
 	
 .draw:
+	protocol_emit (PROTOCOL_SET_COLOR, 0, 0, 0)
+	protocol_emit (PROTOCOL_CLEAR_SCREEN)
+	
 	protocol_emit (PROTOCOL_SET_COLOR, 255, 255, 255)
 	
 	lw $a0, 0($s0)

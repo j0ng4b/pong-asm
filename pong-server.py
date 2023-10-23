@@ -50,12 +50,14 @@ def main():
     last_key = -1
     key_pending = False
 
+    print('Iniciando o pong em assembly...')
     proc = subprocess.Popen(['java', '-jar', 'Mars.jar', 'pong-client.asm'],
                             stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
     # Ignorar as primeira linhas de saída padrão do Mars
     proc.stdout.read1(68)
 
+    print('Iniciando o pong em python...')
     while proc.poll() == None and running:
         delta_time = (pygame.time.get_ticks() - last_time) / 1000
         last_time = pygame.time.get_ticks()
